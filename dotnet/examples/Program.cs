@@ -3,6 +3,7 @@ using Microsoft.Research.SEAL;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+
 // #define TEST
 
 
@@ -12,7 +13,7 @@ namespace Homomorphic_Additive
     {
         static void Main(string[] args)
         {
-            int votersCount = 100;
+            int votersCount = 10000;
             ulong keysize = 2048;
 
             int[] votes = createSampleVotes(votersCount,1);
@@ -38,6 +39,12 @@ namespace Homomorphic_Additive
             Ciphertext encrypted = new Ciphertext();
             Console.WriteLine("-----------------------------------");
             Console.WriteLine("Encoding the vote values ... ");
+            
+          
+
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
             for (int i = 0; i < votes.Length; i++)
             {
                 Plaintext plain = encoder.Encode(votes[i]);
@@ -50,6 +57,8 @@ namespace Homomorphic_Additive
                 evaluator.AddInplace(encryptedTotal, encrypted);
                 
             }
+            sw.Stop();
+            Console.WriteLine("Elapsed={0}", sw.Elapsed);
             Console.WriteLine("Done");
 
             Console.WriteLine("-----------------------------------");
