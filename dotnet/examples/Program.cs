@@ -3,6 +3,8 @@ using Microsoft.Research.SEAL;
 using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+// #define TEST
+
 
 namespace Homomorphic_Additive
 {
@@ -10,12 +12,16 @@ namespace Homomorphic_Additive
     {
         static void Main(string[] args)
         {
-            int votersCount = 10;
-            int[] votes = createSampleVotes(votersCount);
+            int votersCount = 100;
+            ulong keysize = 2048;
+
+            int[] votes = createSampleVotes(votersCount,1);
+#if (TEST)
             Console.WriteLine("votes=[{0}]", string.Join(", ", votes));
+#endif
             Console.WriteLine("Sum of all votes = {0}", votes.Sum());
 
-            SEALContext context = createContext();
+            SEALContext context = createContext(keysize);
             IntegerEncoder encoder = new IntegerEncoder(context);
             KeyGenerator keygen = new KeyGenerator(context);
 
@@ -36,9 +42,13 @@ namespace Homomorphic_Additive
             {
                 Plaintext plain = encoder.Encode(votes[i]);
                 encryptor.Encrypt(plain, encrypted);
-                // Console.WriteLine($"Noise budget in encrypted: {decryptor.InvariantNoiseBudget(encrypted)} bits");
+#if (TEST)
+                Console.WriteLine($"Noise budget in encrypted: {decryptor.InvariantNoiseBudget(encrypted)} bits");
+
                 Console.WriteLine($"Encoded {votes[i]} as polynomial {plain.ToString()}");
+#endif
                 evaluator.AddInplace(encryptedTotal, encrypted);
+                
             }
             Console.WriteLine("Done");
 
@@ -53,22 +63,22 @@ namespace Homomorphic_Additive
             Console.ReadLine();
         }
 
-        static SEALContext createContext()
+        static SEALContext createContext(ulong keysize)
         {
             EncryptionParameters parms = new EncryptionParameters(SchemeType.BFV);
-            parms.PolyModulusDegree = 2048;
-            parms.CoeffModulus = DefaultParams.CoeffModulus128(polyModulusDegree: 2048);
+            parms.PolyModulusDegree = keysize;
+            parms.CoeffModulus = DefaultParams.CoeffModulus128(polyModulusDegree: keysize);
             parms.PlainModulus = new SmallModulus(1 << 8);
             return SEALContext.Create(parms);
         }
 
-        static int[] createSampleVotes(int size)
+        static int[] createSampleVotes(int size, int max)
         {
             Random random = new Random();
             int[] votes = new int[size];
             for (int i = 0; i < size; i++)
             {
-                votes[i] = (int) random.Next(1, 100);
+                votes[i] = (int) random.Next(1, max);
             }
             return votes;
         }
